@@ -4,6 +4,11 @@
 #include <GLFW/glfw3.h>
 #include "render/ShadeProgram.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>  // translate, rotate, perspective, lookAt
+#include <glm/gtc/type_ptr.hpp>          // value_ptr для glUniformMatrix4fv
+
+
 GLfloat point[] = {
      0.0f,  0.5f, 0.0f,
      0.5f, -0.5f, 0.0f,
@@ -59,6 +64,8 @@ int main(void)
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
     }
+
+    std::cout << "GLM Version: " << GLM_VERSION_MAJOR << "." << GLM_VERSION_MINOR << "." << GLM_VERSION_PATCH << "." << GLM_VERSION_REVISION << std::endl;
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
