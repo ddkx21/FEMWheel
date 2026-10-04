@@ -1,7 +1,22 @@
 #include "ShadeProgram.h"
-
 #include <iostream>
 #include <ostream>
+#include <fstream>
+#include <sstream>
+#include <glm/gtc/type_ptr.hpp>
+
+namespace {
+    std::string readFile(const std::string& path) {
+        std::ifstream file(path);
+        if (!file) {
+            std::cerr << "Cannot open shader file: " << path << std::endl;
+            return {};
+        }
+        std::stringstream ss;
+        ss << file.rdbuf();
+        return ss.str();
+    }
+}
 
 namespace Renderer {
     ShadeProgram::ShadeProgram(const std::string& vertexShader, const std::string& fragmentShader) {
@@ -86,5 +101,17 @@ namespace Renderer {
 
         ShadeProgram.m_ID = 0;
         ShadeProgram.m_isCompiled = false;
+    }
+
+    ShadeProgram ShadeProgram::fromFiles(const std::string& vertexPath, const std::string& fragmentPath) {
+        return ShadeProgram(readFile(vertexPath), readFile(fragmentPath));
+    }
+
+    void ShadeProgram::setMat4(const std::string& name, const glm::mat4& value) const {
+        glUniformMatrix4fv(glGetUniformLocation(m_ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+    }
+
+    void ShadeProgram::setVec3(const std::string& name, const glm::vec3& value) const {
+        glUniform3fv(glGetUniformLocation(m_ID, name.c_str()), 1, glm::value_ptr(value));
     }
 }

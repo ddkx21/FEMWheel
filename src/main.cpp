@@ -5,39 +5,30 @@
 #include "render/ShadeProgram.h"
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>  // translate, rotate, perspective, lookAt
-#include <glm/gtc/type_ptr.hpp>          // value_ptr для glUniformMatrix4fv
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 
-GLfloat point[] = {
-     0.0f,  0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-    -0.5f, -0.5f, 0.0f,
+GLfloat cube[] = {
+
+    -0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,   0.0f, 1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,   0.0f, 0.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,   0.0f, 1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,   0.2f, 0.2f, 0.2f,
 };
 
-GLfloat colors[] = {
-    0.0f, 1.0f, 0.0f,
-    1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 1.0f,
+GLuint indices[] = {
+    0, 1, 2,  2, 3, 0,
+    4, 5, 6,  6, 7, 4,
+    0, 4, 7,  7, 3, 0,
+    1, 5, 6,  6, 2, 1,
+    3, 2, 6,  6, 7, 3,
+    0, 1, 5,  5, 4, 0,
 };
-
-const char* vertex_shader =
-    "#version 460\n"
-"layout(location = 0) in vec3 vertex_position;"
-"layout(location = 1) in vec3 vertex_color;"
-"out vec3 color;"
-"void main() {"
-" color = vertex_color;"
-" gl_Position = vec4(vertex_position, 1.0);"
-"}";
-
-const char* fragment_shader =
-    "#version 460\n"
-"in vec3 color;"
-"out vec4 frag_color;"
-"void main() {"
-" frag_color = vec4(color, 1.0);"
-"}";
 
 
 int windowWidth = 640;
@@ -94,61 +85,70 @@ int main(void)
     std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
-    glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
 
     {
-    std::string vertexShader(vertex_shader);
-    std::string fragmentShader(fragment_shader);
-    Renderer::ShadeProgram ShadeProgram(vertexShader, fragmentShader);
+    GLuint vao, vbo, ebo;
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+    glGenBuffers(1, &ebo);
 
-    if (!ShadeProgram.isCompiled()) {
+    glBindVertexArray(vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cube), cube, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+
+    auto shader = Renderer::ShadeProgram::fromFiles(
+          std::string(RES_DIR) + "/shaders/basic.vert",
+        std::string(RES_DIR) + "/shaders/basic.frag");
+
+    if (!shader.isCompiled()) {
         std::cerr << "Cant create shader program!" << std::endl;
         return -1;
     }
 
 
-    GLuint points_vbo = 0;
-    glGenBuffers(1, &points_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(point), point, GL_STATIC_DRAW);
-
-    GLuint colors_vbo = 0;
-    glGenBuffers(1, &colors_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
-
-    GLuint vao = 0;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glEnable(GL_DEPTH_TEST);
 
     /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(pWindow))
-    {
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+    while (!glfwWindowShouldClose(pWindow)) {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        ShadeProgram.use();
+        int w, h;
+        glfwGetFramebufferSize(pWindow, &w, &h);
+        glViewport(0, 0, w, h);
+
+        float t = static_cast<float>(glfwGetTime());
+        glm::mat4 model = glm::rotate(glm::mat4(1.0f), t, glm::vec3(0.5f, 1.0f, 0.0f));
+        glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 1.5f, 3.0f),   // где камера
+                                     glm::vec3(0.0f, 0.0f, 0.0f),   // куда смотрит
+                                     glm::vec3(0.0f, 1.0f, 0.0f));  // где верх
+        glm::mat4 projection = glm::perspective(glm::radians(60.0f),
+                                                static_cast<float>(w) / static_cast<float>(h),
+                                                0.1f, 100.0f);
+
+        shader.use();
+        shader.setMat4("u_model", model);
+        shader.setMat4("u_view", view);
+        shader.setMat4("u_projection", projection);
+
         glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
-        /* Swap front and back buffers */
         glfwSwapBuffers(pWindow);
-
-        /* Poll for and process events */
         glfwPollEvents();
     }
 
     glDeleteVertexArrays(1, &vao);
-    glDeleteBuffers(1, &points_vbo);
-    glDeleteBuffers(1, &colors_vbo);
+    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
     }
 
     glfwTerminate();
