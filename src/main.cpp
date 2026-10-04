@@ -1,3 +1,6 @@
+#include <iostream>
+#include <ostream>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 int main(void)
@@ -19,11 +22,20 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+    if (!gladLoadGL()) {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
+
+    std::cout << "OpenGL version: " << GLVersion.major << ";" << GLVersion.minor << std::endl;
+
+    glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
-        //glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
