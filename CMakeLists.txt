@@ -7,8 +7,9 @@ set(CMAKE_CXX_STANDARD 17)
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 add_executable(${PROJECT_NAME} src/main.cpp
-        src/main.cpp)
-
+        src/main.cpp
+        src/render/ShadeProgram.cpp
+        src/render/ShadeProgram.h)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)

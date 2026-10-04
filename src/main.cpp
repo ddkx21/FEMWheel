@@ -2,6 +2,7 @@
 #include <ostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "render/ShadeProgram.h"
 
 GLfloat point[] = {
      0.0f,  0.5f, 0.0f,
@@ -11,8 +12,8 @@ GLfloat point[] = {
 
 GLfloat colors[] = {
     0.0f, 1.0f, 0.0f,
-    0.5f, 0.5f, 0.0f,
-    1.0f, 0.5f, 0.0f,
+    1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 1.0f,
 };
 
 const char* vertex_shader =
@@ -55,7 +56,7 @@ int main(void)
     /* Initialize the library */
     if (!glfwInit()) {
 
-        std::cout << "Failed to initialize GLFW" << std::endl;
+        std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
     }
 
@@ -67,7 +68,7 @@ int main(void)
     GLFWwindow* pWindow = glfwCreateWindow(windowWidth, windowHeight, "FEMWheel", nullptr, nullptr);
     if (!pWindow)
     {
-        std::cout << "Failed to create GLFW window" << std::endl;
+        std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return -1;
     }
@@ -86,24 +87,17 @@ int main(void)
     std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
-    //glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+    glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
 
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertex_shader, nullptr);
-    glCompileShader(vertexShader);
+    {
+    std::string vertexShader(vertex_shader);
+    std::string fragmentShader(fragment_shader);
+    Renderer::ShadeProgram ShadeProgram(vertexShader, fragmentShader);
 
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragment_shader, nullptr);
-    glCompileShader(fragmentShader);
-
-    GLuint shared_program = glCreateProgram();
-    glAttachShader(shared_program, vertexShader);
-    glAttachShader(shared_program, fragmentShader);
-    glLinkProgram(shared_program);
-
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    if (!ShadeProgram.isCompiled()) {
+        std::cerr << "Cant create shader program!" << std::endl;
+        return -1;
+    }
 
 
     GLuint points_vbo = 0;
@@ -134,7 +128,7 @@ int main(void)
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shared_program);
+        ShadeProgram.use();
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -143,6 +137,11 @@ int main(void)
 
         /* Poll for and process events */
         glfwPollEvents();
+    }
+
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &points_vbo);
+    glDeleteBuffers(1, &colors_vbo);
     }
 
     glfwTerminate();
