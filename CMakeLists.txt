@@ -2,14 +2,14 @@ cmake_minimum_required(VERSION 3.20)
 
 set(PROJECT_NAME FEMWheel)
 
-set(CMAKE_CXX_STANDARD 17)
-
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 add_executable(${PROJECT_NAME} src/main.cpp
         src/main.cpp
         src/render/ShadeProgram.cpp
         src/render/ShadeProgram.h)
+
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
