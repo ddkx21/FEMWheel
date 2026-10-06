@@ -103,10 +103,6 @@ namespace Renderer {
         ShadeProgram.m_isCompiled = false;
     }
 
-    ShadeProgram ShadeProgram::fromFiles(const std::string& vertexPath, const std::string& fragmentPath) {
-        return ShadeProgram(readFile(vertexPath), readFile(fragmentPath));
-    }
-
     void ShadeProgram::setMat4(const std::string& name, const glm::mat4& value) const {
         glUniformMatrix4fv(glGetUniformLocation(m_ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
     }

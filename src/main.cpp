@@ -2,6 +2,7 @@
 #include <ostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "resources/ResourcesManager.h"
 #include "render/ShadeProgram.h"
 
 #include <glm/glm.hpp>
@@ -47,7 +48,7 @@ void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int 
     }
 }
 
-int main(void)
+int main(int argc, char** argv)
 {
     /* Initialize the library */
     if (!glfwInit()) {
@@ -105,14 +106,13 @@ int main(void)
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
 
-    auto shader = Renderer::ShadeProgram::fromFiles(
-          std::string(RES_DIR) + "/shaders/basic.vert",
-        std::string(RES_DIR) + "/shaders/basic.frag");
 
-    if (!shader.isCompiled()) {
-        std::cerr << "Cant create shader program!" << std::endl;
-        return -1;
-    }
+        ResourcesManager resourcesManager(argv[0]);
+    auto shader = resourcesManager.loadShaderProgram(
+    "basic",
+    "res/basic.vert",
+    "res/basic.frag"
+    );
 
 
     glEnable(GL_DEPTH_TEST);
@@ -134,11 +134,13 @@ int main(void)
                                                 static_cast<float>(w) / static_cast<float>(h),
                                                 0.1f, 100.0f);
 
-        shader.use();
-        shader.setMat4("u_model", model);
-        shader.setMat4("u_view", view);
-        shader.setMat4("u_projection", projection);
 
+        shader->use();
+        shader->setMat4("u_model", model);
+        shader->setMat4("u_view", view);
+        shader->setMat4("u_projection", projection);
+
+        
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
