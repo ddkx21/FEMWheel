@@ -12,6 +12,8 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/resources/stb_image.h
         src/render/Texture2D.cpp
         src/render/Texture2D.h
+        src/render/Mesh.cpp
+        src/render/Mesh.h
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)

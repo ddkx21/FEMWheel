@@ -5,51 +5,54 @@
 #include "resources/ResourcesManager.h"
 #include "render/ShadeProgram.h"
 #include "render/Texture2D.h"
+#include "render/Mesh.h"
+
+#include <vector>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 
-GLfloat cube[] = {
+const std::vector<Renderer::Vertex> cubeVertices = {
     // Передняя грань (+Z)
-    -0.5f, -0.5f,  0.5f,   0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,   1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,   1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,   0.0f, 1.0f,
+    {{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}},
+    {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}},
+    {{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}},
+    {{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f}},
 
     // Задняя грань (-Z)
-     0.5f, -0.5f, -0.5f,   0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,   1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,   1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,   0.0f, 1.0f,
+    {{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}},
+    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}},
+    {{-0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}},
+    {{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}},
 
     // Левая грань (-X)
-    -0.5f, -0.5f, -0.5f,   0.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,   1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,   1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,   0.0f, 1.0f,
+    {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}},
+    {{-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}},
+    {{-0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}},
+    {{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}},
 
     // Правая грань (+X)
-     0.5f, -0.5f,  0.5f,   0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,   1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,   1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,   0.0f, 1.0f,
+    {{ 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}},
+    {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}},
+    {{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}},
+    {{ 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f}},
 
     // Верхняя грань (+Y)
-    -0.5f,  0.5f,  0.5f,   0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,   1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,   1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,   0.0f, 1.0f,
+    {{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f}},
+    {{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f}},
+    {{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}},
+    {{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}},
 
     // Нижняя грань (-Y)
-    -0.5f, -0.5f, -0.5f,   0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,   1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,   1.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,   0.0f, 1.0f,
+    {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}},
+    {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}},
+    {{ 0.5f, -0.5f,  0.5f}, {1.0f, 1.0f}},
+    {{-0.5f, -0.5f,  0.5f}, {0.0f, 1.0f}},
 };
 
-GLuint indices[] = {
+const std::vector<GLuint> cubeIndices = {
     0,  1,  2,   2,  3,  0,
     4,  5,  6,   6,  7,  4,
     8,  9, 10,  10, 11,  8,
@@ -115,23 +118,7 @@ int main(int argc, char** argv)
 
 
     {
-    GLuint vao, vbo, ebo;
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
-    glGenBuffers(1, &ebo);
-
-    glBindVertexArray(vao);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube), cube, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), nullptr);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+    Renderer::Mesh cubeMesh(cubeVertices, cubeIndices);
 
         ResourcesManager resourcesManager(argv[0]);
 
@@ -178,16 +165,12 @@ int main(int argc, char** argv)
 
         
         texture->bind(0);
-        glBindVertexArray(vao);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
+        cubeMesh.draw();
 
         glfwSwapBuffers(pWindow);
         glfwPollEvents();
     }
 
-    glDeleteVertexArrays(1, &vao);
-    glDeleteBuffers(1, &vbo);
-    glDeleteBuffers(1, &ebo);
     }
 
     glfwTerminate();
