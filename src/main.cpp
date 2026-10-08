@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include "resources/ResourcesManager.h"
 #include "render/ShadeProgram.h"
+#include "render/Texture2D.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -11,24 +12,50 @@
 
 
 GLfloat cube[] = {
+    // Передняя грань (+Z)
+    -0.5f, -0.5f,  0.5f,   0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,   1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,   1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,   0.0f, 1.0f,
 
-    -0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,   0.0f, 1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,   0.0f, 0.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,   0.0f, 1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,   0.2f, 0.2f, 0.2f,
+    // Задняя грань (-Z)
+     0.5f, -0.5f, -0.5f,   0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,   1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,   1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,   0.0f, 1.0f,
+
+    // Левая грань (-X)
+    -0.5f, -0.5f, -0.5f,   0.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,   1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,   1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,   0.0f, 1.0f,
+
+    // Правая грань (+X)
+     0.5f, -0.5f,  0.5f,   0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,   1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,   1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,   0.0f, 1.0f,
+
+    // Верхняя грань (+Y)
+    -0.5f,  0.5f,  0.5f,   0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,   1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,   1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,   0.0f, 1.0f,
+
+    // Нижняя грань (-Y)
+    -0.5f, -0.5f, -0.5f,   0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,   1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,   1.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,   0.0f, 1.0f,
 };
 
 GLuint indices[] = {
-    0, 1, 2,  2, 3, 0,
-    4, 5, 6,  6, 7, 4,
-    0, 4, 7,  7, 3, 0,
-    1, 5, 6,  6, 2, 1,
-    3, 2, 6,  6, 7, 3,
-    0, 1, 5,  5, 4, 0,
+    0,  1,  2,   2,  3,  0,
+    4,  5,  6,   6,  7,  4,
+    8,  9, 10,  10, 11,  8,
+   12, 13, 14,  14, 15, 12,
+   16, 17, 18,  18, 19, 16,
+   20, 21, 22,  22, 23, 20,
 };
 
 
@@ -102,19 +129,28 @@ int main(int argc, char** argv)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), nullptr);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
-
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
 
         ResourcesManager resourcesManager(argv[0]);
+
+    auto texture = resourcesManager.loadTexture(
+        "asphalt",
+        "res/textures/asphalt-1-1.jpg"
+        );
     auto shader = resourcesManager.loadShaderProgram(
     "basic",
     "res/basic.vert",
     "res/basic.frag"
     );
-
-
+    if (!shader || !texture) {
+        std::cerr << "Failed to load rendering resources" << std::endl;
+        glfwSetWindowShouldClose(pWindow, GLFW_TRUE);
+    } else {
+        shader->use();
+        shader->setInt("u_texture", 0);
+    }
     glEnable(GL_DEPTH_TEST);
 
     /* Loop until the user closes the window */
@@ -141,6 +177,7 @@ int main(int argc, char** argv)
         shader->setMat4("u_projection", projection);
 
         
+        texture->bind(0);
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 

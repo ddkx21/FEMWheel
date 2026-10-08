@@ -4,7 +4,10 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include "../render/Texture2D.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 ResourcesManager::ResourcesManager(const std::string &executablePath)
     : m_path(executablePath) {
@@ -67,3 +70,40 @@ std::shared_ptr<Renderer::ShadeProgram>
       std::cerr << "Shader not found: " << shaderName << std::endl;
       return nullptr; 
   }
+
+
+std::shared_ptr<Renderer::Texture2D>
+  ResourcesManager::loadTexture(const std::string &textureName, const std::string &filePath) {
+  auto it = m_textures.find(textureName);
+  if (it != m_textures.end()) {
+    return it->second;
+  }
+
+  const std::string fullPath = m_path + "/" + filePath;
+  int width = 0, height = 0, channels = 0;
+  stbi_set_flip_vertically_on_load(true);
+
+  using ImageData = std::unique_ptr<unsigned char, decltype(&stbi_image_free)>;
+
+  ImageData pixels(stbi_load(fullPath.c_str(), &width, &height, &channels, STBI_rgb_alpha),&stbi_image_free);
+
+  if (!pixels) {
+    std::cerr << "Failed to load texture: " << fullPath << std::endl;
+    return nullptr;
+  }
+
+  auto texture = std::make_shared<Renderer::Texture2D>(width, height, pixels.get());
+  m_textures.emplace(textureName, texture);
+  return texture;
+}
+
+std::shared_ptr<Renderer::Texture2D>
+  ResourcesManager::getTexture(const std::string &textureName) const {
+  auto it = m_textures.find(textureName);
+  if (it != m_textures.end()) {
+    return it->second;
+  }
+
+  std::cerr << "Texture not found: " << textureName << std::endl;
+  return nullptr;
+}

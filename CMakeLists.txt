@@ -9,6 +9,9 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/render/ShadeProgram.h
         src/resources/ResourcesManager.cpp
         src/resources/ResourcesManager.h
+        src/resources/stb_image.h
+        src/render/Texture2D.cpp
+        src/render/Texture2D.h
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
@@ -40,4 +43,8 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/res/shaders"
         "$<TARGET_FILE_DIR:${PROJECT_NAME}>/res"
+
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/res/textures"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/res/textures"
 )

@@ -110,4 +110,8 @@ namespace Renderer {
     void ShadeProgram::setVec3(const std::string& name, const glm::vec3& value) const {
         glUniform3fv(glGetUniformLocation(m_ID, name.c_str()), 1, glm::value_ptr(value));
     }
+
+    void ShadeProgram::setInt(const std::string& name, int value) const {
+        glUniform1i(glGetUniformLocation(m_ID, name.c_str()), value);
+    }
 }
