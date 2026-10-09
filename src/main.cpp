@@ -7,6 +7,7 @@
 #include "render/Texture2D.h"
 #include "render/Mesh.h"
 #include "render/Camera.h"
+#include "primitives/Primitives.h"
 
 #include <vector>
 
@@ -14,53 +15,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-
-const std::vector<Renderer::Vertex> cubeVertices = {
-    // Передняя грань (+Z)
-    {{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}},
-    {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}},
-    {{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}},
-    {{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f}},
-
-    // Задняя грань (-Z)
-    {{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}},
-    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}},
-    {{-0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}},
-    {{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}},
-
-    // Левая грань (-X)
-    {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}},
-    {{-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}},
-    {{-0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}},
-    {{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}},
-
-    // Правая грань (+X)
-    {{ 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}},
-    {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}},
-    {{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}},
-    {{ 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f}},
-
-    // Верхняя грань (+Y)
-    {{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f}},
-    {{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f}},
-    {{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}},
-    {{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}},
-
-    // Нижняя грань (-Y)
-    {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}},
-    {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}},
-    {{ 0.5f, -0.5f,  0.5f}, {1.0f, 1.0f}},
-    {{-0.5f, -0.5f,  0.5f}, {0.0f, 1.0f}},
-};
-
-const std::vector<GLuint> cubeIndices = {
-    0,  1,  2,   2,  3,  0,
-    4,  5,  6,   6,  7,  4,
-    8,  9, 10,  10, 11,  8,
-   12, 13, 14,  14, 15, 12,
-   16, 17, 18,  18, 19, 16,
-   20, 21, 22,  22, 23, 20,
-};
 
 
 int windowWidth = 640;
@@ -132,9 +86,13 @@ int main(int argc, char** argv)
 
 
     {
-    Renderer::Mesh cubeMesh(cubeVertices, cubeIndices);
+    const Renderer::MeshData cube = Renderer::makeBox(1.0f, 1.0f, 1.0f);
+    Renderer::Mesh cubeMesh(cube.vertices, cube.indices);
 
-        ResourcesManager resourcesManager(argv[0]);
+    ResourcesManager resourcesManager(argv[0]);
+
+    const Renderer::MeshData plane = Renderer::makePlane(100.0f, 100.0f);
+    Renderer::Mesh planeMesh(plane.vertices, plane.indices);
 
     auto texture = resourcesManager.loadTexture(
         "asphalt",
@@ -151,6 +109,7 @@ int main(int argc, char** argv)
     } else {
         shader->use();
         shader->setInt("u_texture", 0);
+        shader->setVec3("u_lightDir", glm::normalize(glm::vec3(0.4f, 1.0f, 0.3f)));
     }
     glEnable(GL_DEPTH_TEST);
 
@@ -165,7 +124,7 @@ int main(int argc, char** argv)
     while (!glfwWindowShouldClose(pWindow)) {
         int w, h;
         glfwGetFramebufferSize(pWindow, &w, &h);
-        if (w == 0 || h == 0) { // окно свёрнуто, aspect был бы делением на ноль
+        if (w == 0 || h == 0) {
             glfwWaitEvents();
             continue;
         }
@@ -198,6 +157,9 @@ int main(int argc, char** argv)
         
         texture->bind(0);
         cubeMesh.draw();
+
+        shader->setMat4("u_model", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+        planeMesh.draw();
 
         glfwSwapBuffers(pWindow);
         glfwPollEvents();

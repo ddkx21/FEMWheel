@@ -16,6 +16,8 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/render/Mesh.h
         src/render/Camera.cpp
         src/render/Camera.h
+        src/primitives/Primitives.cpp
+        src/primitives/Primitives.h
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
