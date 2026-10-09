@@ -16,8 +16,8 @@ namespace Renderer {
             ShadeProgram() = delete;
             ShadeProgram(const ShadeProgram&) = delete;
             ShadeProgram& operator=(const ShadeProgram&) = delete;
-            ShadeProgram& operator=(ShadeProgram&& ShadeProgram) noexcept;
-            ShadeProgram(ShadeProgram&& ShadeProgram) noexcept;
+            ShadeProgram& operator=(ShadeProgram&& other) noexcept;
+            ShadeProgram(ShadeProgram&& other) noexcept;
 
             void setMat4(const std::string& name, const glm::mat4& value) const;
             void setVec3(const std::string& name, const glm::vec3& value) const;

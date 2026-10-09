@@ -9,8 +9,8 @@ namespace Renderer {
 
         Texture2D operator = (Texture2D &) = delete;
         Texture2D(Texture2D &) = delete;
-        Texture2D operator = (Texture2D &&) noexcept;
-        Texture2D(Texture2D &&) noexcept;
+        Texture2D operator = (Texture2D &&) = delete;
+        Texture2D(Texture2D &&) = delete;
 
         void bind(GLuint textureUnit = 0) const;
 

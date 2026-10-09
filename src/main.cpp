@@ -6,6 +6,7 @@
 #include "render/ShadeProgram.h"
 #include "render/Texture2D.h"
 #include "render/Mesh.h"
+#include "render/Camera.h"
 
 #include <vector>
 
@@ -65,17 +66,27 @@ const std::vector<GLuint> cubeIndices = {
 int windowWidth = 640;
 int windowHeight = 480;
 
-void glfwWindowSizeCallback(GLFWwindow* window, int width, int height) {
-    windowWidth = width;
-    windowHeight = height;
-    glViewport(0,0,windowWidth,windowHeight);
-}
-
 void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
         std::cout << "Escape key pressed" << std::endl;
     }
+}
+
+
+void processInput(GLFWwindow* window, Renderer::Camera& camera, float deltaTime) {
+    auto pressed = [window](int key) { return glfwGetKey(window, key) == GLFW_PRESS; };
+
+    glm::vec3 direction(0.0f);
+    if (pressed(GLFW_KEY_W)) direction.z += 1.0f;
+    if (pressed(GLFW_KEY_S)) direction.z -= 1.0f;
+    if (pressed(GLFW_KEY_D)) direction.x += 1.0f;
+    if (pressed(GLFW_KEY_A)) direction.x -= 1.0f;
+    if (pressed(GLFW_KEY_SPACE)) direction.y += 1.0f;
+    if (pressed(GLFW_KEY_LEFT_CONTROL)) direction.y -= 1.0f;
+
+    const float boost = pressed(GLFW_KEY_LEFT_SHIFT) ? 4.0f : 1.0f;
+    camera.move(direction, deltaTime * boost);
 }
 
 int main(int argc, char** argv)
@@ -102,8 +113,11 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    glfwSetWindowSizeCallback(pWindow, glfwWindowSizeCallback);
     glfwSetKeyCallback(pWindow, glfwKeyCallback);
+    glfwSetInputMode(pWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    if (glfwRawMouseMotionSupported()) {
+        glfwSetInputMode(pWindow, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    }
 
     /* Make the window's context current */
     glfwMakeContextCurrent(pWindow);
@@ -128,8 +142,8 @@ int main(int argc, char** argv)
         );
     auto shader = resourcesManager.loadShaderProgram(
     "basic",
-    "res/basic.vert",
-    "res/basic.frag"
+    "res/shaders/basic.vert",
+    "res/shaders/basic.frag"
     );
     if (!shader || !texture) {
         std::cerr << "Failed to load rendering resources" << std::endl;
@@ -140,22 +154,40 @@ int main(int argc, char** argv)
     }
     glEnable(GL_DEPTH_TEST);
 
+
+    Renderer::Camera camera(glm::vec3(0.0f, 1.5f, 3.0f), -90.0f, -25.0f);
+
+    double lastX, lastY;
+    glfwGetCursorPos(pWindow, &lastX, &lastY);
+    double lastTime = glfwGetTime();
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(pWindow)) {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         int w, h;
         glfwGetFramebufferSize(pWindow, &w, &h);
+        if (w == 0 || h == 0) { // окно свёрнуто, aspect был бы делением на ноль
+            glfwWaitEvents();
+            continue;
+        }
         glViewport(0, 0, w, h);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        float t = static_cast<float>(glfwGetTime());
+        const double now = glfwGetTime();
+        const float deltaTime = static_cast<float>(now - lastTime);
+        lastTime = now;
+
+        double x, y;
+        glfwGetCursorPos(pWindow, &x, &y);
+        camera.rotate(static_cast<float>(x - lastX), static_cast<float>(y - lastY));
+        lastX = x;
+        lastY = y;
+
+        processInput(pWindow, camera, deltaTime);
+
+        float t = static_cast<float>(now);
         glm::mat4 model = glm::rotate(glm::mat4(1.0f), t, glm::vec3(0.5f, 1.0f, 0.0f));
-        glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 1.5f, 3.0f),   // где камера
-                                     glm::vec3(0.0f, 0.0f, 0.0f),   // куда смотрит
-                                     glm::vec3(0.0f, 1.0f, 0.0f));  // где верх
-        glm::mat4 projection = glm::perspective(glm::radians(60.0f),
-                                                static_cast<float>(w) / static_cast<float>(h),
-                                                0.1f, 100.0f);
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 projection = camera.getProjectionMatrix(static_cast<float>(w) / static_cast<float>(h));
 
 
         shader->use();

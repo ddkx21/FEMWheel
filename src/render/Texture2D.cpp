@@ -6,7 +6,8 @@
 namespace Renderer {
     Texture2D::Texture2D(int width, int height, const unsigned char *pixels) {
         if (width <= 0 || height <= 0 || pixels == nullptr) {
-            std::cerr << "Texture2D::Texture2D()" << std::endl;
+            std::cerr << "Texture load err" << std::endl;
+            return;
         }
 
         glGenTextures(1, &m_ID);

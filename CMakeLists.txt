@@ -14,6 +14,8 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/render/Texture2D.h
         src/render/Mesh.cpp
         src/render/Mesh.h
+        src/render/Camera.cpp
+        src/render/Camera.h
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
@@ -44,7 +46,7 @@ add_custom_command(
 
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/res/shaders"
-        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/res"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/res/shaders"
 
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/res/textures"

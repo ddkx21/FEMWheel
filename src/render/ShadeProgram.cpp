@@ -5,19 +5,6 @@
 #include <sstream>
 #include <glm/gtc/type_ptr.hpp>
 
-namespace {
-    std::string readFile(const std::string& path) {
-        std::ifstream file(path);
-        if (!file) {
-            std::cerr << "Cannot open shader file: " << path << std::endl;
-            return {};
-        }
-        std::stringstream ss;
-        ss << file.rdbuf();
-        return ss.str();
-    }
-}
-
 namespace Renderer {
     ShadeProgram::ShadeProgram(const std::string& vertexShader, const std::string& fragmentShader) {
         GLuint vertexShaderID;
@@ -82,25 +69,25 @@ namespace Renderer {
         glUseProgram(m_ID);
     }
 
-    ShadeProgram& ShadeProgram::operator=(ShadeProgram&& ShadeProgram) noexcept {
-        if (this == &ShadeProgram) {
+    ShadeProgram& ShadeProgram::operator=(ShadeProgram&& other) noexcept {
+        if (this == &other) {
             return *this;
         }
         glDeleteProgram(m_ID);
-        m_ID = ShadeProgram.m_ID;
-        m_isCompiled = ShadeProgram.m_isCompiled;
+        m_ID = other.m_ID;
+        m_isCompiled = other.m_isCompiled;
 
-        ShadeProgram.m_ID = 0;
-        ShadeProgram.m_isCompiled = false;
+        other.m_ID = 0;
+        other.m_isCompiled = false;
         return *this;
     }
 
-    ShadeProgram::ShadeProgram(ShadeProgram&& ShadeProgram) noexcept {
-        m_ID = ShadeProgram.m_ID;
-        m_isCompiled = ShadeProgram.m_isCompiled;
+    ShadeProgram::ShadeProgram(ShadeProgram&& other) noexcept {
+        m_ID = other.m_ID;
+        m_isCompiled = other.m_isCompiled;
 
-        ShadeProgram.m_ID = 0;
-        ShadeProgram.m_isCompiled = false;
+        other.m_ID = 0;
+        other.m_isCompiled = false;
     }
 
     void ShadeProgram::setMat4(const std::string& name, const glm::mat4& value) const {
